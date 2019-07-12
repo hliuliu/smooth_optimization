@@ -22,15 +22,39 @@ def init_poly_vars(variables):
 def constant_poly(c):
 	return Polynomial([],[(c,[])])
 
+def split_list(seq, used):
+	incl, excl = [],[]
+	for i,j in enumerate(seq):
+		(incl if i in used else excl).append(j)
+	return incl,excl
+
+
+def sorted_variables(poly, key=None):
+	if key is None:
+		key = lambda x: x
+	if not isinstance(poly, Polynomial):
+		raise TypeError('First argument must be a Polynomial instance')
+	newvars = sorted(poly.variables, key=key)
+	newterms = []
+	for expl,coef in poly.terms.iteritems():
+		expl = poly._to_var_dict(poly.variables,expl)
+		newterms.append((coef, expl))
+
+	return Polynomial(newvars,newterms)
+
+
+
 
 class Polynomial(object):
 
-	def _check_exponents(self, seq):
+	@staticmethod
+	def _check_exponents(seq):
 		for i in seq:
 			if type(i) not in [int,long]:
 				raise TypeError('exponent not integral: '+str(i))
 			if i<0:
 				raise TypeError('exponent is negative: '+str(i))
+
 
 
 
@@ -43,6 +67,7 @@ class Polynomial(object):
 		self.variables = list(variables)
 		self.variables_rlookup = {v:i for i,v in enumerate(variables)}
 		self.terms = {}
+		self.deg = None
 
 		for coef, expcoll in terms:
 			if coef==0:
@@ -51,13 +76,18 @@ class Polynomial(object):
 				expcoll = tuple(zero_pad(expcoll,len(variables)))
 			else:
 				seq = [0]*len(variables)
-				for v,e in expcoll:
+				for v,e in expcoll.iteritems():
 					seq[self.variables_rlookup[v]] = e
 				expcoll = tuple(seq)
 			self._check_exponents(expcoll)
 			if coef == int(coef):
 				coef = int(coef)
-			self.terms[expcoll] = coef
+			self.terms[expcoll] = self.terms.get(expcoll,0)+coef
+			if self.terms[expcoll] == int(self.terms[expcoll]):
+				self.terms[expcoll] = int(self.terms[expcoll])
+			if not self.terms[expcoll]:
+				del self.terms[expcoll]
+
 
 	#@staticmethod
 	def _monomial_str(self, exponents, coef):
@@ -70,8 +100,8 @@ class Polynomial(object):
 			if e:
 				ans += '{}^{}'.format(v,e) if e>1 else str(v)
 
-		if not ans:
-			return '1'
+		if ans in ['','-']:
+			ans += '1'
 		return ans
 
 
@@ -150,6 +180,177 @@ class Polynomial(object):
 			if vds!=vdo or cs!=co:
 				return False
 		return True
+
+	def __ne__(self,other):
+		return not self==other
+
+	def is_constant(self):
+		for expl in self.terms:
+			if sum(expl):
+				return False
+		return True
+
+	def __float__(self):
+		if not self.is_constant():
+			raise ValueError('Polynomial is nonconstant')
+		[coef] = self.terms.values()
+		return float(coef)
+
+	def __int__(self):
+		fl = float(self)
+		if fl!=int(fl):
+			raise ValueError('Constant polynomial is not an integer')
+		return int(fl)
+
+	def coef_of(self, monomial, partial = False):
+		'''
+			monomial = {x0:e0,x1:e1,...,xn:en}
+			xi are the variables
+			Returns the coefficient of x0^e0*x1^e1*...*xn^en
+
+			If partial is set to True, then a Polynomial is returned.
+			Otherwise, a number is returned.
+				In this case, if m>n, and set(self.varlist()) == {x0,x1,...,xm},
+					the numer returned is the coefficient of x0^e0*x1^e1*...*xn^en* x{n+1}^0* ... * xm^0
+
+			If a variable, y not in self.varlist() appears with exponent e, then the following rule is applied:
+				1. If e=0, this variable is simply ignored, hence implicitly discarded.
+				2. If e>0, then 0 is returned (as a polynomial if partial is True, or a raw number otherwise)
+
+		'''
+		explist = [0]*len(self.variables)
+		used = set()
+		for x,e in monomial.iteritems():
+			if x not in self.variables_rlookup:
+				if e:
+					return (constant_poly if partial else int)(0)
+				continue
+			explist[self.variables_rlookup[x]] = e
+			used.add(self.variables_rlookup[x])
+
+		if not partial:
+			return self.terms.get(tuple(explist),0)
+
+		varincl,varexcl = split_list(self.variables,used)
+		expincl,_ = split_list(explist, used)
+		newterms = []
+
+		for texp, coef in self.terms.iteritems():
+			incl,excl = split_list(texp,used)
+			if incl == expincl:
+				newterms.append((coef, excl))
+
+		return Polynomial(varexcl,newterms)
+
+	@staticmethod
+	def get_sum(*polys):
+		'''
+			polys = [p1,p2,...,pn]
+			each pi is a Polynomial
+			returns s = p1+p2+...+pn, in the usual sense of Polynomial addition
+			s.varlist() is the union of the pi.varlist(), in an arbitrary order
+		'''
+		newvars = set()
+		for p in polys:
+			newvars |= set(p.varlist())
+		newvars = list(newvars)
+		newterms = []
+		for p in polys:
+			for expl,coef in p.terms.iteritems():
+				newterms.append((coef, Polynomial._to_var_dict(p.varlist(),expl)) )
+
+		return Polynomial(newvars,newterms)
+
+
+	def __add__(self, other):
+		if not isinstance(other,Polynomial):
+			other = constant_poly(other)
+
+		return self.get_sum(self,other)
+
+	def __radd__(self,other):
+		return self+other
+
+	def __sub__(self,other):
+		return self+(-other)
+
+	def __rsub__(self,other):
+		return -(self-other)
+
+	def is_zero(self):
+		return not self.terms
+
+	def __nonzero__(self):
+		return bool(self.terms)
+
+	def degree(self):
+		if self.deg is None:
+			self.deg = max([sum(ex) for ex in self.terms])
+		return self.deg
+
+	@staticmethod
+	def _monomial_product(mon1,mon2):
+		prod = {}
+
+		for m in [mon1,mon2]:
+			for v,e in m.iteritems():
+				prod[v] = prod.get(v,0)+e
+
+		return prod
+
+	def __mul__(self,other):
+		if not isinstance(other,Polynomial):
+			other = constant_poly(other)
+		newvars = list(set(self.variables) | set(other.variables))
+		newterms = []
+		svb = [(self._to_var_dict(self.variables, e),c) for e,c in self.terms.iteritems()]
+		ovb = [(self._to_var_dict(other.variables, e),c) for e,c in other.terms.iteritems()]
+
+		for se, sc in svb:
+			for oe,oc in ovb:
+				newterms.append((sc*oc, self._monomial_product(se,oe)))
+
+		return Polynomial(newvars,newterms)
+
+	def __rmul__(self,other):
+		return self*other
+
+	def derivative(self,wrt):
+		if wrt not in self.variables_rlookup:
+			return constant_poly(0)
+		newterms = []
+
+		for expl,coef in self.terms.iteritems():
+			if expl[self.variables_rlookup[wrt]]:
+				expl = self._to_var_dict(self.variables, expl)
+				coef *= expl[wrt]
+				expl[wrt]-=1
+				newterms.append((coef, expl))
+
+		return Polynomial(self.variables, newterms)
+
+	@staticmethod
+	def _recpow(poly, n):
+		if n==0:
+			return constant_poly(1)
+		if n==1:
+			return poly
+		psq = poly*poly
+		n,r = divmod(n,2)
+		ans = Polynomial._recpow(psq,n)
+		if r:
+			ans *= poly
+		return ans
+
+	def __pow__(self, n):
+		self._check_exponents([n])
+		return self._recpow(self,n)
+
+
+
+
+
+
 
 
 
