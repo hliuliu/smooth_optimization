@@ -1,7 +1,7 @@
 
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 
@@ -193,6 +193,8 @@ class Polynomial(object):
 	def __float__(self):
 		if not self.is_constant():
 			raise ValueError('Polynomial is nonconstant')
+		if not self.terms:
+			return 0.0
 		[coef] = self.terms.values()
 		return float(coef)
 
