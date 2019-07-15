@@ -13,6 +13,8 @@ zero_poly = ply.constant_poly(0)
 
 class PolynomialArray(object):
 
+	AUTO_NUMPY = True
+
 	@staticmethod
 	def _check_shape(seq):
 		for i in seq:
@@ -79,6 +81,49 @@ class PolynomialArray(object):
 			A.append(p.to_numpy_array(indices+(i,)))
 
 		return np.array(A)
+
+	def __call__(self,*args,**kwargs):
+		'''
+			Calls each polynomial entries, and replace that polynomial with the result.
+			if all the entries are constant, then,
+				if PoynomialArray.AUTO_NUMPY is True then a Numpy array with those numbers and same shape is returned.
+				else, a PolynomialArray of constant polynomials is returned.
+			else, a PolynomialArray with the returned Polynomials is returned. 
+		'''
+
+		if not self.shape:
+			val = self.array(*args,**kwargs)
+			if PolynomialArray.AUTO_NUMPY:
+				if not isinstance(val, Poly) or val.is_constant():
+					return int(val) if val == int(val) else float(val)
+			if not isinstance(val,Poly):
+				val = ply.constant_poly(val)
+			return PolynomialArray((), val)
+
+
+
+		new_array = [pa(*args,**kwargs) for pa in self.array]
+
+		indices = [i for i in xrange(len(new_array)) if isinstance(new_array[i],PolynomialArray)]
+
+		if not indices:
+			return np.array(new_array)
+
+		if len(indices)!=len(new_array):
+			# disable numpy conversion
+			PolynomialArray.AUTO_NUMPY = False
+			for i,_ in enumerate(new_array):
+				if not isinstance(new_array[i],PolynomialArray):
+					new_array[i] = self.array[i](*args,**kwargs)
+			PolynomialArray.AUTO_NUMPY = True
+
+		npa = PolynomialArray(0)
+		npa.array = new_array
+		npa.shape = self.shape
+		return npa
+
+
+
 
 
 

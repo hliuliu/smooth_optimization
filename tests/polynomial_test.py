@@ -161,3 +161,8 @@ def all_equal(seq):
 
 assert(all_equal([fpg,fpgs,fpg_xy,fpg_xys]))
 
+
+assert((x**2)(x+3)==(x+3)**2)
+assert((x**2+y)(x=y**2,y=x+y)==y**4+x+y)
+
+
