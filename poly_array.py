@@ -1,8 +1,12 @@
 
 
-import Polynomial as ply
+import polynomial as ply
 
 import numpy as np
+
+#from numbers import Number as _num
+
+
 
 
 Poly = ply.Polynomial
@@ -63,7 +67,7 @@ class PolynomialArray(object):
 	def dimensions(self):
 		return self.shape
 
-	def to_numpy_array(self, indicies = ()):
+	def to_numpy_array(self, indices = ()):
 		'''
 			Convert to the numpy array with same shape and data.
 			Only works if all polynomials are constant.

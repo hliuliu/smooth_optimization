@@ -47,6 +47,7 @@ def sorted_variables(poly, key=None):
 
 class Polynomial(object):
 
+
 	@staticmethod
 	def _check_exponents(seq):
 		for i in seq:
