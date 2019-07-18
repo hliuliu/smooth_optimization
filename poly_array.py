@@ -4,6 +4,8 @@ import polynomial as ply
 
 import numpy as np
 
+from math import ceil
+
 #from numbers import Number as _num
 
 
@@ -12,6 +14,14 @@ import numpy as np
 Poly = ply.Polynomial
 
 zero_poly = ply.constant_poly(0)
+
+
+def _slice_len(n, sl):
+	start,stop,step = sl.indices(n)
+	if (stop-start)*step<=0:
+		return 0
+	return 1+(stop-start)//step
+
 
 
 
@@ -125,6 +135,160 @@ class PolynomialArray(object):
 		npa.array = new_array
 		npa.shape = self.shape
 		return npa
+
+
+	def __len__(self):
+		if not self.shape:
+			raise ValueError('Cannot get length of a degenerate singleton array')
+		return self.shape[0]
+
+
+	def __iter__(self):
+		if not self.shape:
+			raise ValueError('No dimensions. not iterable')
+		flag = len(self.shape)==1
+		if flag:
+			for item in self.array:
+				yield item.array
+		else:
+			for item in self.array:
+				yield item
+
+	def to_nested_list(self,poly_to_str=False):
+		if not self.shape:
+			return self.array if not poly_to_str else str(self.array)
+		return [entry.to_nested_list(poly_to_str) for entry in self.array]
+
+
+	def __str__(self):
+		return str(self.to_nested_list(True))
+
+	@staticmethod
+	def _get_yield_entry(index, entry, incl):
+		return (index,entry) if incl else entry
+
+	def entries(self, incl_indices=False):
+		index = 0
+		if not self.shape:
+			yield self._get_yield_entry(index,self.array, incl_indices)
+		else:
+			for subarray in self.array:
+				for entry in subarray.entries():
+					yield self._get_yield_entry(index,entry,incl_indices)
+					index +=1
+
+	@staticmethod
+	def populate(pa,iter_entries,iter_conv=True):
+		'''
+			Note:
+				Default parameter, iter_conv, is for implemetation details,
+					Users should ignore it 
+			Populates the PolynomialArray instance with entries for an iterable object.
+			Lex ordering is used.
+			Population happens until the new entries of the array positions run out, whichever is first
+			Returns True iff the iterator is not all used up BEFORE ALL the array positions are changed
+			Assumes that all entries are polynomial objects
+		'''
+		if iter_conv:
+			iter_entries = iter(iter_entries)
+		
+		if not pa.shape:
+			nxt = next(iter_entries,None)
+			if nxt is None:
+				return False
+			pa.array = nxt
+			return True
+
+		for spa in pa.array:
+			if not pa.populate(spa,iter_entries,False):
+				return False
+		return True
+
+
+
+	def reshape(self, shape, allow_size_diff= False):
+		'''
+			Returns an array of the new provided shape.
+			Entries are populated in lex order of indices.
+			Remaining entries of new array, if any, are 0 by default.
+			If the new array is too small, some entries (lex order) of self will not appear in the new array
+			If allow_size_diff is et to False, then equalent dimensions is forced. (via an exception otherwise)
+		'''
+		try:
+			iter(shape)
+		except:
+			shape = (shape,)
+		self._check_shape(shape)
+
+		if not allow_size_diff and ply.product(shape)!=ply.product(self.shape):
+			raise ValueError('Cannot reshape: number of Polynomial entries differ')
+
+		newpa = PolynomialArray(shape)
+
+		self.populate(newpa, self.entries())
+
+		return newpa
+
+	def __getitem__(self,inds):
+		'''
+			inds can be of type int,slice, of a tuple consisting of those types.
+		'''
+		if type(inds) is not tuple:
+			inds = (inds,)
+
+		pa = self._get_item_keep_as_array(inds)
+
+		if not pa.shape:
+			return pa.array
+		return pa
+
+
+
+
+	def _get_item_keep_as_array(self,inds):
+		
+		if inds and not self.shape:
+			raise IndexError('Dimension overflow: %d'%inds[0])
+
+		if not inds:
+			return self
+
+		currind,inds = inds[0],inds[1:]
+
+		if type(currind) is int:
+			return self.array[currind]._get_item_keep_as_array(inds)
+
+		# currind is a slice
+		subarray = self.array[currind]
+		spa = ([entry._get_item_keep_as_array(inds) for entry in subarray])
+
+		if spa:
+			sspa = PolynomialArray(0)
+			sspa.shape = (len(spa),)+(spa[0].shape)
+			sspa.array = spa
+			return sspa
+
+		# slice currind yield an empty sequence
+		# still need to retain the shape
+
+		newshape = [0]
+
+		for i,s in zip(inds,self.shape[1:]):
+			if type(i) is slice:
+				newshape.append(_slice_len(s,i))
+			else:
+				if -s<=i<s:
+					newshape.append(1)
+				else:
+					raise IndexError('Index out of bounds, {}, of size {}'.format(i,s))
+
+		return PolynomialArray(tuple(newshape))
+
+
+
+
+
+
 
 
 
