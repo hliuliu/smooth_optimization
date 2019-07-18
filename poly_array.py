@@ -243,6 +243,25 @@ class PolynomialArray(object):
 		return pa
 
 
+	def __setitem__(self,inds,poly):
+		'''
+			self[inds] = poly
+			currently: only supprots updating a single entry
+		'''
+		if not isinstance(poly,Poly):
+			poly = ply.constant_poly(poly)
+		if type(inds) is not tuple:
+			inds = (inds,)
+		if not self.shape:
+			if not inds:
+				self.array = poly
+				return
+		if len(inds)!=len(self.shape):
+			raise IndexError('Indices Tuple does not match the dimensions in length')
+		pa = self._get_item_keep_as_array(inds[:-1])
+		pa.array[inds[-1]] = PolynomialArray((), poly)
+
+
 
 
 	def _get_item_keep_as_array(self,inds):

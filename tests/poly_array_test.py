@@ -106,6 +106,8 @@ assert(type(pv5[0].array[0]) is parr.PolynomialArray)
 
 assert(pv5.dimensions()==(2,4))
 
+print 'pv5 =',pv5
+
 print pv5.to_nested_list()
 
 ct=0
@@ -115,3 +117,22 @@ for entry in pv5.entries():
 	ct+=1
 
 assert(ct==2*4)
+
+pv5[0,0] = 2*x*y
+
+print pv5
+print pv4
+
+pv6 = pv5[1]
+
+print 'seeting pv6 to pv5[1]:',pv6
+print 'change pv6[2] to x+y'
+pv6[2] = x+y
+print 'pv6: ', pv6
+
+print 'should see change in pv5 ...', pv5
+
+
+print 'set pv5[1,3] to x-y'
+pv5[1,3]= x-y
+print 'pv5:',pv5,'pv6:',pv6
