@@ -1,1 +1,1 @@
-## Smooth Opyimization
+## Smooth Optimization
