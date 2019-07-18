@@ -136,3 +136,16 @@ print 'should see change in pv5 ...', pv5
 print 'set pv5[1,3] to x-y'
 pv5[1,3]= x-y
 print 'pv5:',pv5,'pv6:',pv6
+
+assert(pv3!=pv4)
+assert(pv3==pv4.reshape(pv3.dimensions()))
+assert(pv3.equals_ignore_shape(pv4))
+
+
+pv7 = pv6+pv6
+print pv7
+
+
+
+
+

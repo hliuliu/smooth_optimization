@@ -23,6 +23,22 @@ def _slice_len(n, sl):
 	return 1+(stop-start)//step
 
 
+def _itermap(func, *args):
+	while 1:
+		coll = []
+		for it in args:
+			try:
+				nxt = next(it)
+			except StopIteration:
+				break
+			else:
+				coll.append(nxt)
+		else:
+			yield func(*coll)
+			continue
+		break
+
+
 
 
 class PolynomialArray(object):
@@ -302,6 +318,82 @@ class PolynomialArray(object):
 					raise IndexError('Index out of bounds, {}, of size {}'.format(i,s))
 
 		return PolynomialArray(tuple(newshape))
+
+
+	def __eq__(self,other):
+		'''
+			Two PolynomialArray instances are equal if their shape, and corresponding components, are equal
+		'''
+		if not isinstance(other, PolynomialArray):
+			return False
+		if self.shape!=other.shape:
+			return False
+
+		for e1,e2 in zip(self.entries(),other.entries()):
+			if e1!=e2:
+				return False
+
+		return True
+
+	def equals_ignore_shape(self,other):
+		'''
+			returns True iff
+				self can be reshaped, resp. lex order, to look like other
+			iff
+				The 'flattened' versions for self and other and identical
+
+			return value logically equivalent to 
+				self.reshape(other.dimensions(),True) == other
+		'''
+		if not isinstance(other, PolynomialArray):
+			return False
+		if ply.product(self.shape)!=ply.product(other.shape):
+			return False
+
+		for e1,e2 in zip(self.entries(),other.entries()):
+			if e1!=e2:
+				return False
+
+		return True
+
+	def __add__(self,other):
+		if not isinstance(other, PolynomialArray):
+			return NotImplemented
+		if self.shape!=other.shape:
+			raise ValueError('Cannot add. Dimensions differ')
+		pa = PolynomialArray(self.shape)
+		def _func():
+			for e1,e2 in zip(self.entries(),other.entries()):
+				yield e1+e2
+
+		self.populate(pa,_func())
+		return pa
+
+	def transform(self,func, in_place=False):
+		'''
+			replace each entry self[inds] with func(self[inds]),
+				which must be a number or a polynomial object
+		'''
+
+		if not in_place:
+			self = self.reshape(self.shape)
+
+		self.populate(self,_itermap(func, self.entries()))
+
+		if not in_place:
+			return self
+
+	def __neg__(self):
+		return self.transform(lambda x: -x)
+
+	def __sub__(self,other):
+		if not isinstance(other, PolynomialArray):
+			return NotImplemented
+		return self+(-other)
+
+	def __nonzero__(self):
+		return 0 not in self.shape
+
 
 
 
