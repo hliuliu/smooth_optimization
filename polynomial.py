@@ -302,6 +302,9 @@ class Polynomial(object):
 		return prod
 
 	def __mul__(self,other):
+		from poly_array import PolynomialArray as Parr
+		if isinstance(other,Parr):
+			return other*self
 		if not isinstance(other,Polynomial):
 			other = constant_poly(other)
 		newvars = list(set(self.variables) | set(other.variables))

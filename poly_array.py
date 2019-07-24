@@ -38,6 +38,11 @@ def _itermap(func, *args):
 			continue
 		break
 
+def _ident(*args):
+	return args
+
+def _iterzip(*args):
+	return _itermap(_ident,*args)
 
 
 
@@ -324,16 +329,7 @@ class PolynomialArray(object):
 		'''
 			Two PolynomialArray instances are equal if their shape, and corresponding components, are equal
 		'''
-		if not isinstance(other, PolynomialArray):
-			return False
-		if self.shape!=other.shape:
-			return False
-
-		for e1,e2 in zip(self.entries(),other.entries()):
-			if e1!=e2:
-				return False
-
-		return True
+		return self.equals_ignore_shape(other) and self.shape==other.shape
 
 	def equals_ignore_shape(self,other):
 		'''
@@ -350,7 +346,7 @@ class PolynomialArray(object):
 		if ply.product(self.shape)!=ply.product(other.shape):
 			return False
 
-		for e1,e2 in zip(self.entries(),other.entries()):
+		for e1,e2 in _iterzip(self.entries(),other.entries()):
 			if e1!=e2:
 				return False
 
@@ -363,8 +359,24 @@ class PolynomialArray(object):
 			raise ValueError('Cannot add. Dimensions differ')
 		pa = PolynomialArray(self.shape)
 		def _func():
-			for e1,e2 in zip(self.entries(),other.entries()):
+			for e1,e2 in _iterzip(self.entries(),other.entries()):
 				yield e1+e2
+
+		self.populate(pa,_func())
+		return pa
+
+	def hadamard(self,other):
+		'''
+			Componentwise multiplication
+		'''
+		if not isinstance(other, PolynomialArray):
+			return NotImplemented
+		if self.shape!=other.shape:
+			raise ValueError('Cannot multiply componentwise. Dimensions differ')
+		pa = PolynomialArray(self.shape)
+		def _func():
+			for e1,e2 in _iterzip(self.entries(),other.entries()):
+				yield e1*e2
 
 		self.populate(pa,_func())
 		return pa
@@ -393,6 +405,17 @@ class PolynomialArray(object):
 
 	def __nonzero__(self):
 		return 0 not in self.shape
+
+	def __mul__(self,other):
+		if not isinstance(other, Poly):
+			other = ply.constant_poly(other)
+		return self.transform(lambda x: x*other)
+
+	def __rmul__(self,other):
+		return self*other
+
+	
+
 
 
 

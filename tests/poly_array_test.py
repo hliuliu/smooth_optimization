@@ -143,7 +143,25 @@ assert(pv3.equals_ignore_shape(pv4))
 
 
 pv7 = pv6+pv6
-print pv7
+print 'pv7=pv6+pv6=',pv7
+
+print 'squaring pv7 in place'
+
+pv7.transform(lambda x: x**2,True)
+print 'pv7',pv7
+
+pv8 = pv7*(x+y)
+
+print 'pv8 = pv7 *(x+y)=',pv8
+print '-pv6 =', -pv6
+
+pv9 = parr.PolynomialArray(pv2.dimensions(), y)
+pv9[1,3] = x**2
+print 'pv9:',pv9
+
+pv10 =pv9.hadamard(pv2)
+
+print 'pv10=pv9 .* pv2 (Matlab notation):', pv10
 
 
 
