@@ -14,6 +14,8 @@ import polynomial as ply
 import numpy as np
 
 
+ply.Polynomial.AUTO_SORT_VARIABLES = True
+
 
 
 ######################

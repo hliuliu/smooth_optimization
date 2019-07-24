@@ -47,6 +47,8 @@ def sorted_variables(poly, key=None):
 
 class Polynomial(object):
 
+	AUTO_SORT_VARIABLES = False
+
 
 	@staticmethod
 	def _check_exponents(seq):
@@ -66,7 +68,9 @@ class Polynomial(object):
 		'''
 
 		self.variables = list(variables)
-		self.variables_rlookup = {v:i for i,v in enumerate(variables)}
+		if Polynomial.AUTO_SORT_VARIABLES:
+			self.variables.sort()
+		self.variables_rlookup = {v:i for i,v in enumerate(self.variables)}
 		self.terms = {}
 		self.deg = None
 
@@ -75,11 +79,14 @@ class Polynomial(object):
 				continue
 			if type(expcoll) is list:
 				expcoll = tuple(zero_pad(expcoll,len(variables)))
-			else:
-				seq = [0]*len(variables)
-				for v,e in expcoll.iteritems():
-					seq[self.variables_rlookup[v]] = e
-				expcoll = tuple(seq)
+				expcoll = dict(zip(variables, expcoll))
+				# print expcoll
+			
+			seq = [0]*len(variables)
+			for v,e in expcoll.iteritems():
+				seq[self.variables_rlookup[v]] = e
+			expcoll = tuple(seq)
+
 			self._check_exponents(expcoll)
 			if coef == int(coef):
 				coef = int(coef)
