@@ -3,6 +3,8 @@
 import numpy as np
 # import matplotlib.pyplot as plt
 
+from numbers import Number as _num
+
 
 
 def product(seq):
@@ -42,7 +44,12 @@ def sorted_variables(poly, key=None):
 
 	return Polynomial(newvars,newterms)
 
-
+def to_poly(poly):
+	if not isinstance(poly,Polynomial):
+		if isinstance(poly,_num):
+			return constant_poly(poly)
+		raise TypeError("Cannot convert object '{}' of type '{}' to polynomial".format(poly,type(poly)))
+	return poly
 
 
 class Polynomial(object):
@@ -358,6 +365,15 @@ class Polynomial(object):
 	def __pow__(self, n):
 		self._check_exponents([n])
 		return self._recpow(self,n)
+
+	def gradient(self):
+		from poly_array import PolynomialVector as pv
+		gd = []
+
+		for v in self.variables:
+			gd.append(self.derivative(v))
+
+		return pv(gd)
 
 
 

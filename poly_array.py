@@ -24,6 +24,7 @@ def _slice_len(n, sl):
 
 
 def _itermap(func, *args):
+	args = map(iter,args)
 	while 1:
 		coll = []
 		for it in args:
@@ -416,7 +417,44 @@ class PolynomialArray(object):
 
 	
 
+class PolynomialVector(PolynomialArray):
 
+
+	def __new__(cls, seq=None, n=None, default = zero_poly):
+
+		if seq is not None:
+			seq = list(seq)
+			n = len(seq)
+
+		obj = super(PolynomialVector,cls).__new__(cls, n,default)
+
+
+		if seq is not None:
+			obj.populate(obj, _itermap(ply.to_poly,seq))
+
+		return obj
+
+
+	def __add__(self,other):
+		sm = super(PolynomialVector,self).__add__(other)
+		return PolynomialVector(sm)
+
+	def __radd__(self,other):
+		return self+other
+
+	def transform(self,func,in_place=False):
+		return PolynomialVector(super(PolynomialVector,self).transform(func,in_place))
+
+
+	def __mul__(self,other):
+		prod = super(PolynomialVector,self).__mul__(other)
+		return PolynomialVector(prod)
+
+	def hadamard(self,other):
+		return PolynomialVector(super(PolynomialVector,self).hadamard(other))
+
+	def dot(self,other):
+		return sum(self.hadamard(other))
 
 
 
