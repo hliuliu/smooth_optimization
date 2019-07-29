@@ -458,6 +458,23 @@ class PolynomialVector(PolynomialArray):
 
 
 
+class PolynomialMatrix(PolynomialArray):
+
+	def __new__(cls, seq = None, nrows=None, ncols=None, default=zero_poly):
+		if seq is not None:
+			seq = map(PolynomialVector, seq)
+			nrows = len(seq)
+			ncols = len(seq[0]) if seq else 0
+			if len(set(map(len,seq)))!= 1:
+				raise ValueError('The row vectors are not all the smae size')
+
+		obj = super(PolynomialMatrix, cls).__new__(cls, (nrows,ncols),default)
+
+		if seq is not None:
+			for i in xrange(nrows):
+				obj.array[i] = PolynomialVector(seq[i])
+
+		return obj
 
 
 
