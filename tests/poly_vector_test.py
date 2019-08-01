@@ -90,3 +90,6 @@ print '-',p4g,'=',-p4g
 
 assert type(-p1g)==type(p1g)
 assert type(p1g-p2g)==type(p2g)
+
+
+

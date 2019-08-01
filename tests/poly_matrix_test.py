@@ -52,4 +52,51 @@ for i in [0,1,2]:
 
 assert M.dimensions() == (3,3)
 
+M0 = M(0,0,0)
+
+print M0
+
+assert type(M0)==np.ndarray
+
+print M(1,2,4)
+
+print M(0,0,1)*M(1,2,3)
+
+item = M[1][0]
+
+M[1][0] = x**3+y-z
+
+print M
+
+assert( not M.symmetric())
+
+M[1,0] = item
+
+
+
+print M
+
+M_T = M.transpose()
+
+print M_T
+
+for i in [0,1,2]:
+	for j in [0,1,2]:
+		assert (M[i][j])==M_T[j][i]
+
+assert M_T.transpose()==M
+
+print g1
+
+print g1.gradient()
+
+H1 = f1.hessian()
+assert H1.symmetric()
+assert H1==g1.gradient()
+
+
+for row in M:
+	print row,type(row)
+	assert isinstance(row,pvec)
+
 

@@ -375,6 +375,9 @@ class Polynomial(object):
 
 		return pv(gd)
 
+	def hessian(self):
+		return self.gradient().gradient()
+
 
 
 

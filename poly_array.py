@@ -226,6 +226,11 @@ class PolynomialArray(object):
 				return False
 		return True
 
+	def derivative(self,wrt):
+		der = self.transform(lambda f: f.derivative(wrt))
+		if not self.shape:
+			return der.array
+		return der
 
 
 	def reshape(self, shape, allow_size_diff= False):
@@ -408,8 +413,10 @@ class PolynomialArray(object):
 		return 0 not in self.shape
 
 	def __mul__(self,other):
-		if not isinstance(other, Poly):
-			other = ply.constant_poly(other)
+		try:
+			other = ply.to_poly(other)
+		except:
+			return NotImplemented
 		return self.transform(lambda x: x*other)
 
 	def __rmul__(self,other):
@@ -456,6 +463,22 @@ class PolynomialVector(PolynomialArray):
 	def dot(self,other):
 		return sum(self.hadamard(other))
 
+	def as_row(self):
+		return PolynomialMatrix([self])
+
+	def as_column(self):
+		return PolynomialMatrix([[v] for v in self])
+
+	def gradient(self):
+		return PolynomialMatrix([f.gradient() for f in self])
+
+	def __nonzero__(self):
+		for entry in self:
+			if entry:
+				return True
+		return False
+
+
 
 
 class PolynomialMatrix(PolynomialArray):
@@ -466,7 +489,7 @@ class PolynomialMatrix(PolynomialArray):
 			nrows = len(seq)
 			ncols = len(seq[0]) if seq else 0
 			if len(set(map(len,seq)))!= 1:
-				raise ValueError('The row vectors are not all the smae size')
+				raise ValueError('The row vectors are not all the same size')
 
 		obj = super(PolynomialMatrix, cls).__new__(cls, (nrows,ncols),default)
 
@@ -475,6 +498,122 @@ class PolynomialMatrix(PolynomialArray):
 				obj.array[i] = PolynomialVector(seq[i])
 
 		return obj
+
+	def square(self):
+		return len(set(self.shape))==1
+
+	def __add__(self,other):
+		sm = super(PolynomialMatrix,self).__add__(other)
+		return PolynomialMatrix(sm)
+
+	def __radd__(self,other):
+		return self+other
+
+	@property
+	def nrows(self):
+		return self.shape[0]
+
+	@property
+	def ncols(self):
+		return self.shape[1]
+
+	def transpose(self):
+		mat = PolynomialMatrix(nrows=self.ncols,ncols=self.nrows)
+		for i in xrange(self.nrows):
+			for j in xrange(self.ncols):
+				mat[j][i] = self[i][j]
+		return mat
+
+	def is_row_vector(self):
+		return self.nrows==1
+
+	def is_column_vector(self):
+		return self.ncols==1
+
+	def symmetric(self):
+		if not self.square():
+			return False
+
+		n = self.nrows
+
+		for i in xrange(n-1):
+			for j in xrange(i+1,n):
+				if self[i,j]!=self[j,i]:
+					return False
+		return True
+
+	def skew_symmetric(self):
+		if not self.square():
+			return False
+		n = self.nrows
+		for i in xrange(n-1):
+			if self[i,i]:
+				return False
+			for j in xrange(i+1,n):
+				if self[i,j]!=-self[j,i]:
+					return False
+
+		return True
+
+	def transform(self, func,in_place):
+		return PolynomialMatrix(
+			super(PolynomialMatrix,self).transform(func,in_place)
+			)
+
+	def is_diagonal(self):
+		for i in xrange(n-1):
+			for j in xrange(i+1,n):
+				if self[i,j] or self[j,i]:
+					return False
+		return True
+
+
+	def __nonzero__(self):
+		for row in self:
+			if row:
+				return True
+		return False
+
+	def __mul__(self,other):
+		if not isinstance(other,PolynomialArray):
+			return PolynomialMatrix(super(PolynomialMatrix, self).__mul__(other))
+
+		try:
+			other = PolynomialMatrix(other)
+		except:
+			return NotImplemented
+
+		m,n = self.shape
+		nn,p = other.shape
+		if n!=nn:
+			raise ValueError('Cannot multiply matrices of dimension {}x{} with {}x{}'.format(m,n,nn,p))
+
+		res = PolynomialMatrix(nrows = m, ncols = p)
+
+		for i in xrange(m):
+			for j in xrange(n):
+				for k in xrange(p):
+					res[i][k] += self[i][j]*other[j][k]
+
+		return res
+
+
+	def __rmul__(self,other):
+		if isinstance(other, PolynomialArray):
+			try:
+				other = PolynomialMatrix(other)
+			except:
+				return NotImplemented
+			return other*self
+		return self*other
+
+
+
+
+
+
+
+
 
 
 
