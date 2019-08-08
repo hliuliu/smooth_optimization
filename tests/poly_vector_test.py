@@ -93,3 +93,14 @@ assert type(p1g-p2g)==type(p2g)
 
 
 
+A = np.array([1,2,3])
+print A
+
+PA = PolyVec.from_numpy(A)
+
+print PA
+
+
+
+
+

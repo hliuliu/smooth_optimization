@@ -99,4 +99,9 @@ for row in M:
 	print row,type(row)
 	assert isinstance(row,pvec)
 
+A = np.array([[1,2],[3,4]])
+print A
+PA = parr.PolynomialMatrix.from_numpy(A)
+
+print PA
 

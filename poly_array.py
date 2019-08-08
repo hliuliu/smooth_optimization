@@ -67,6 +67,23 @@ class PolynomialArray(object):
 		return [PolynomialArray(rec_shape,default) for _ in [0]*shape[0]]
 
 
+	@staticmethod
+	def from_numpy(arr):
+		try:
+			iter(arr)
+		except:
+			return PolynomialArray((),arr)
+		polyarr = PolynomialArray(len(arr))
+
+		for i in xrange(len(arr)):
+			polyarr.array[i] = polyarr.from_numpy(arr[i])
+
+		polyarr.shape = arr.shape
+		return polyarr
+
+
+
+
 	def __new__(cls, shape, default = zero_poly):
 		'''
 			shape: a vector of nonnegative integers [n0, n1, ..., nk], or a single number, n0
@@ -75,8 +92,7 @@ class PolynomialArray(object):
 			Note: for ideal purposes, polynomial entries should have the same list of variables in the same order.
 		'''
 
-		if not isinstance(default, Poly):
-			default = ply.constant_poly(default)
+		default = ply.to_poly(default)
 
 		try: 
 			iter(shape)
@@ -441,6 +457,10 @@ class PolynomialVector(PolynomialArray):
 
 		return obj
 
+	@staticmethod
+	def from_numpy(arr):
+		return PolynomialVector(PolynomialArray.from_numpy(arr))
+
 
 	def __add__(self,other):
 		sm = super(PolynomialVector,self).__add__(other)
@@ -606,6 +626,10 @@ class PolynomialMatrix(PolynomialArray):
 				return NotImplemented
 			return other*self
 		return self*other
+
+	@staticmethod
+	def from_numpy(arr):
+		return PolynomialMatrix(PolynomialArray.from_numpy(arr))
 
 
 
