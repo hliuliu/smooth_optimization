@@ -27,7 +27,7 @@ class ARCModel(object):
 		self.Bk = B0
 		self.sigma = sigma0
 		self.sigma_update_fn = lambda x: x
-		self.hessian_update_function = lambda B: B if H is None else H(*(self.xk))
+		self.hessian_update_function = lambda B,x,d: B if H is None else H(*x)
 
 
 
