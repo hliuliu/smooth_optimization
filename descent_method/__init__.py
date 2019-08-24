@@ -1,7 +1,19 @@
 
 
+import sys,os
+
+sys.path.append(
+	os.path.join(
+			os.path.dirname(__file__),
+			os.pardir
+		)
+	)
+
+
 import numpy as np
 from numpy.linalg import norm
+
+from mat_helper import to_vector as tvec
 
 class DescentMethod(object):
 
@@ -35,7 +47,7 @@ class DescentMethod(object):
 		self.step_length_fn = lambda f,g,xk,dk: 1
 
 		## stopping crietrion: stop when g(xk) has length less then the tolerance
-		self.stopping_fn = lambda g,xk: norm(g(*xk))<self.tol
+		self.stopping_fn = lambda g,xk: norm(g(*tvec(xk) ))<self.tol
 
 		## Hessian approximation update: unchanged by default
 		self.hessian_approx_update = lambda Bk,xk,dk,tk: Bk
@@ -111,18 +123,18 @@ class DescentMethod(object):
 	def report(self):
 		if self.converged():
 			print 'Iterative method successful:', 'Terminated after %d iterations'%self.num_iter
-			print 'Optimal Point %s of value = %.5f'%(self.xk,self.objective(*self.xk))
-			print 'Gradient error: %.5f'%self.gradient(*self.xk)
+			print 'Optimal Point %s of value = %.5f'%(self.xk,self.objective(*tvec(self.xk) ))
+			print 'Gradient error: %.5f'%self.gradient(*tvec(self.xk) )
 
 		elif self.num_iter>=self.max_iter:
 			print 'Reached a maximum of %d iterations'%self.max_iter
 			print 'Method may not be convergent'
-			print 'Gradient error: %.5f'%self.gradient(*self.xk)
+			print 'Gradient error: %.5f'%self.gradient(*tvec(self.xk) )
 
 		else:
 			print 'The optimizer has not yet finished.'
 			print 'Current iterate', self.xk
-			print 'Current value', self.objective(*self.xk)
+			print 'Current value', self.objective(*tvec(self.xk) )
 
 
 

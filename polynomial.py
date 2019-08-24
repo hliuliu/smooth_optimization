@@ -56,6 +56,8 @@ class Polynomial(object):
 
 	AUTO_SORT_VARIABLES = False
 
+	VAR_SORT_KEY = staticmethod(lambda x: x)
+
 
 	@staticmethod
 	def _check_exponents(seq):
@@ -76,7 +78,7 @@ class Polynomial(object):
 
 		self.variables = list(variables)
 		if Polynomial.AUTO_SORT_VARIABLES:
-			self.variables.sort()
+			self.variables.sort(key = Polynomial.VAR_SORT_KEY)
 		self.variables_rlookup = {v:i for i,v in enumerate(self.variables)}
 		self.terms = {}
 		self.deg = None
@@ -377,6 +379,12 @@ class Polynomial(object):
 
 	def hessian(self):
 		return self.gradient().gradient()
+
+	def directional_derivative(self, dvec):
+		g = self.gradient()
+		if type(dvec)!= type(g):
+			dvec = type(g).from_numpy(dvec)
+		return g.dot(dvec)
 
 
 

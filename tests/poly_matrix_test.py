@@ -56,7 +56,7 @@ M0 = M(0,0,0)
 
 print M0
 
-assert type(M0)==np.ndarray
+assert type(M0)==np.matrix
 
 print M(1,2,4)
 

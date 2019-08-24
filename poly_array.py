@@ -459,8 +459,15 @@ class PolynomialVector(PolynomialArray):
 
 	@staticmethod
 	def from_numpy(arr):
+		if len(arr.shape)==2 and 1 in arr.shape:
+			arr = arr.reshape(ply.product(arr.shape))
 		return PolynomialVector(PolynomialArray.from_numpy(arr))
 
+	def __call__(self, *args, **kwargs):
+		v = super(PolynomialVector,self).__call__( *args, **kwargs)
+		if type(v) == PolynomialArray:
+			return PolynomialVector(v)
+		return np.matrix(v.reshape((len(v),1))) # return as column vector for conveniece of matrix vector multiplication
 
 	def __add__(self,other):
 		sm = super(PolynomialVector,self).__add__(other)
@@ -630,6 +637,13 @@ class PolynomialMatrix(PolynomialArray):
 	@staticmethod
 	def from_numpy(arr):
 		return PolynomialMatrix(PolynomialArray.from_numpy(arr))
+
+	def __call__(self, *args, **kwargs):
+		A = super(PolynomialMatrix, self).__call__( *args, **kwargs)
+		if type(A)==PolynomialArray:
+			return PolynomialMatrix(A)
+		return np.matrix(A)
+
 
 
 
