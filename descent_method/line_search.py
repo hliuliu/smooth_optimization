@@ -95,7 +95,7 @@ class Backtracking(LineSearch):
 		self.a = a
 		self.b = b
 
-		LineSearch.__init__(
+		LineSearch.__init__(self,
 				lambda f,g,x,d: _backtracking_routine(
 						f,g,x,d,self.s,self.a,self.b
 					)
