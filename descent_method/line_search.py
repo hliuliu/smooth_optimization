@@ -61,7 +61,7 @@ class ExactLS(LineSearch):
 
 		def find_opt_length(f,g,x,d):
 			if self.ray_fn is None:
-				ray_fn = lambda x,d,t: f(x+td)
+				ray_fn = lambda x,d,t: f(*tvec(x+td))
 			else:
 				ray_fn = self.ray_fn
 			return self.min_routine(lambda t: ray_fn(x,d,t))
@@ -70,12 +70,12 @@ class ExactLS(LineSearch):
 
 
 def _backtracking_routine(f,g,x,d,s,a,b):
-	fx = f(x)
-	gtd = (g(x).T*d)[0,0]
+	fx = f(*tvec(x))
+	gtd = (g( *tvec(x) ).T*d)[0,0]
 	t=s
 	while 1:
 		td = t*d
-		fxtd = f(x+td)
+		fxtd = f(*tvec(x+td))
 		
 		if fx-fxtd>= -a*t*gtd:
 			return t
