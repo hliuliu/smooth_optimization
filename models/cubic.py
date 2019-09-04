@@ -79,8 +79,8 @@ class ARCSubspaceModel(ARCModel):
 			) (self.g)
 
 	def get_hessian_approx(self):
-		if self.T:
-			return T
+		if self.T is not None:
+			return self.T
 		Bk = ARCModel.get_hessian_approx(self)
 		if self.Q is not None:
 			return Bk

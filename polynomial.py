@@ -386,6 +386,20 @@ class Polynomial(object):
 			dvec = type(g).from_numpy(dvec)
 		return g.dot(dvec)
 
+	def is_single_variable(self):
+		return len(self.variables)==1
+
+	def is_linear(self):
+		return self.degree()<=1
+
+	def is_quadratic(self):
+		return self.degree()==2
+
+	def is_cubic(self):
+		return self.degree()==3
+
+
+
 
 
 
